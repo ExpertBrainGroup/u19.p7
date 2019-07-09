@@ -1,0 +1,86 @@
+version: '3.2'
+networks:
+    app-tier:
+        driver: bridge
+
+services:
+    php-apache:
+        build:
+            context: ./php-apache
+        image: manishbelzabar/u19.p7:drupal
+        ports:
+            - 80:80
+        volumes:
+            - ./html:/var/www/html:z
+            - ./react:/var/www/react:z
+            - ./php-apache/conf:/etc/apache2/sites-enabled:z
+            - ./php-apache/logs:/var/log/apache2:z
+            - ./php-apache/php-conf:/usr/local/etc/php/conf.d:z
+        links:
+            - 'mysql'
+        depends_on:
+            - 'mysql'
+        restart: unless-stopped
+        networks:
+            - app-tier
+
+    mysql:
+        image: mysql:5.6
+        environment:
+            TZ: "Europe/Rome"
+            MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+            MYSQL_ROOT_PASSWORD: "rootpwd"
+            MYSQL_USER: 'testuser'
+            MYSQL_PASSWORD: 'testpassword'
+            MYSQL_DATABASE: 'testdb'
+        hostname: mysql
+        networks:
+            - app-tier
+        volumes:
+            - mysql-datavolume:/var/lib/mysql
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - 8080:80
+        links:
+            - mysql
+        environment:
+            PMA_HOST: mysql
+        networks:
+            - app-tier
+
+    memcached:
+        image: bitnami/memcached:latest
+        ports:
+            - 11211:11211
+        hostname: memcached
+        networks:
+            - app-tier
+
+    solr:
+        image: solr:8.1
+        volumes:
+            - ./solr/mycores:/opt/solr/server/solr/mycores
+        ports:
+            - 8983:8983
+        hostname: solr
+        networks:
+            - app-tier
+        entrypoint:
+          - docker-entrypoint.sh
+          - solr-precreate
+          - mycore
+        restart: unless-stopped
+    # phpcs:
+    #     build:
+    #         context: ./phpcs
+    #     image: local_phpcs:latest
+    #     container_name: local_phpcs
+    #     tty: true
+    #     volumes:
+    #         - ./tmp:/tmp
+    #     networks:
+    #         - app-tier
+
+volumes:
+  mysql-datavolume:
