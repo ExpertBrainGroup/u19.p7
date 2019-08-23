@@ -12,7 +12,6 @@ services:
             - 80:80
         volumes:
             - ./html:/var/www/html:z
-            - ./react:/var/www/react:z
             - ./php-apache/conf:/etc/apache2/sites-enabled:z
             - ./php-apache/logs:/var/log/apache2:z
             - ./php-apache/php-conf:/usr/local/etc/php/conf.d:z
@@ -26,6 +25,7 @@ services:
 
     mysql:
         image: mysql:5.6
+        container_name: server_mysql_1
         environment:
             TZ: "Europe/Rome"
             MYSQL_ALLOW_EMPTY_PASSWORD: "no"
@@ -49,28 +49,32 @@ services:
         networks:
             - app-tier
 
-    memcached:
-        image: bitnami/memcached:latest
-        ports:
-            - 11211:11211
-        hostname: memcached
-        networks:
-            - app-tier
+    # ## Enable this for MEMCACHE
+    # memcached:
+    #     image: bitnami/memcached:latest
+    #     ports:
+    #         - 11211:11211
+    #     hostname: memcached
+    #     networks:
+    #         - app-tier
 
-    solr:
-        image: solr:8.1
-        volumes:
-            - ./solr/mycores:/opt/solr/server/solr/mycores
-        ports:
-            - 8983:8983
-        hostname: solr
-        networks:
-            - app-tier
-        entrypoint:
-          - docker-entrypoint.sh
-          - solr-precreate
-          - mycore
-        restart: unless-stopped
+    # ## Enable this for SOLR
+    # solr:
+    #     image: solr:8.1
+    #     volumes:
+    #         - ./solr/mycores:/opt/solr/server/solr/mycores
+    #     ports:
+    #         - 8983:8983
+    #     hostname: solr
+    #     networks:
+    #         - app-tier
+    #     entrypoint:
+    #       - docker-entrypoint.sh
+    #       - solr-precreate
+    #       - mycore
+    #     restart: unless-stopped
+
+    # ## PHPCS is now inside php-apache container
     # phpcs:
     #     build:
     #         context: ./phpcs
